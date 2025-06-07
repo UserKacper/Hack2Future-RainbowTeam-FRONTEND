@@ -30,9 +30,12 @@ export default function UsersPage() {
   const [isLoadingClaims, setIsLoadingClaims] = useState(true) // Loading state for claims
 
   // Fetch data for users
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/Accounts/GetAllUsers",
+      const response = await fetch(`${apiUrl}/api/Accounts/GetAllUsers`,
          {
         method: 'GET',
         headers: {
@@ -52,7 +55,7 @@ export default function UsersPage() {
   // Fetch data for claims
   const fetchClaims = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/claims/get-all-claims",
+      const response = await fetch(`${apiUrl}/api/claims/get-all-claims`,
       {
         method: 'GET',
         headers: {

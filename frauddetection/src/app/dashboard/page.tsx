@@ -14,10 +14,13 @@ export default function DashboardPage() {
   const [error, setError] = useState<unknown | null>(null)
 
   // Fetch users and claims data when the component mounts
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     const fetchUsersAndClaims = async () => {
       try {
-        const userResponse = await fetch('http://localhost:8000/api/Accounts/GetAllUsers', {
+        const userResponse = await fetch(`${apiUrl}/api/Accounts/GetAllUsers`, {
           method: 'GET',
           headers: {
             'accept': 'text/plain',
@@ -28,7 +31,7 @@ export default function DashboardPage() {
           throw new Error(`Error fetching users: ${userResponse.statusText}`)
         }
 
-        const claimResponse = await fetch('http://localhost:8000/api/Claims/get-all-claims', {
+        const claimResponse = await fetch(`${apiUrl}/api/Claims/get-all-claims`, {
           method: 'GET',
           headers: {
             'accept': 'text/plain',

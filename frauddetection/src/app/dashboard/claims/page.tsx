@@ -40,12 +40,13 @@ export default function ClaimsPage() {
   const [claims, setClaims] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown | null>(null)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   // Fetch claims data when the component mounts
   useEffect(() => {
     const fetchClaims = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/Claims/get-all-claims', {
+        const response = await fetch(`${apiUrl}/api/Claims/get-all-claims`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
