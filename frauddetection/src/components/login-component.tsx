@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
-const baseUrl = "http://localhost:8000"
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -26,7 +27,7 @@ export function LoginForm() {
     setIsLoading(true)
 
     // Simulate API call
-    const result = await fetch(`${baseUrl}/api/Accounts/login`, {body: JSON.stringify({email, password}), method: "POST", headers: {"Content-Type": "application/json"}})
+    const result = await fetch(`${apiUrl}/api/Accounts/login`, {body: JSON.stringify({email, password}), method: "POST", headers: {"Content-Type": "application/json"}})
     const {token} = await result.json()
     document.cookie = `token=${token}; path=/; expires=${new Date(Date.now() + 86400e3).toUTCString()}`
     window.location.href = "/dashboard"
