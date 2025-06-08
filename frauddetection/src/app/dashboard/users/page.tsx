@@ -8,96 +8,75 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator"
 import { MoreHorizontal, Plus, UserIcon, Shield, Calendar, Mail, UserCheck } from "lucide-react"
 import { Claim } from "../claims/page"
+import { apiGet } from "@/lib/api"
 
 export interface User {
-    id: string
-    firstName: string
-    lastName: string
-    uniqueIdNumber: string
-    email: string
-    role:string
-    createdAt: string
-    lastLogin: string
-    status: "active" | "pending" | "inactive"
-    insuranceClaimsIds: string[] // Array of claim IDs associated with the user
+  id: string
+  firstName: string
+  lastName: string
+  uniqueIdNumber: string
+  email: string
+  role: string
+  createdAt: string
+  lastLogin: string
+  status: "active" | "pending" | "inactive"
+  insuranceClaimsIds: string[]
 }
-// Assume `users` and `claims` data are available via APIs
+
 export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([]) // Users state
-  const [claims, setClaims] = useState<Claim[]>([]) // Claims state
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true) // Loading state for users
-  const [isLoadingClaims, setIsLoadingClaims] = useState(true) // Loading state for claims
-
-  // Fetch data for users
+  const [users, setUsers] = useState<User[]>([])
+  const [claims, setClaims] = useState<Claim[]>([])
+  const [loading, setLoading] = useState({ users: true, claims: true })
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-  const fetchUsers = async () => {
+  // Fetch data for users and claims
+  const fetchData = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/Accounts/GetAllUsers`,
-         {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-         },
-      }
-      ) // Replace with your actual API endpoint
-      const data = await response.json()
-      setUsers(data)
-    } catch (error) {
-      console.error("Error fetching users:", error)
-    } finally {
-      setIsLoadingUsers(false)
-    }
-  }
+      const [usersResponse, claimsResponse] = await Promise.all([
+        apiGet(`${apiUrl}/api/Accounts/GetAllUsers`),
+        apiGet(`${apiUrl}/api/Claims/get-all-claims`)
+      ]);
 
-  // Fetch data for claims
-  const fetchClaims = async () => {
-    try {
-      const response = await fetch(`${apiUrl}/api/claims/get-all-claims`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-         },
+      if (usersResponse) {
+        const userData = await usersResponse.json();
+        setUsers(userData);
       }
-      ) // Replace with your actual API endpoint
-      const data = await response.json()
-      setClaims(data)
-    } catch (error) {
-      console.error("Error fetching claims:", error)
-    } finally {
-      setIsLoadingClaims(false)
-    }
-  }
 
-  // Fetch data on component mount
+      if (claimsResponse) {
+        const claimsData = await claimsResponse.json();
+        setClaims(claimsData);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading({ users: false, claims: false });
+    }
+  };
   useEffect(() => {
-    fetchUsers()
-    fetchClaims()
-  }, [])
+    void fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "active":
         return "bg-green-100 text-green-800"
-      case "inactive":
-        return "bg-red-100 text-red-800"
       case "pending":
         return "bg-yellow-100 text-yellow-800"
+      case "inactive":
+        return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
-
   const getTypeColor = (type: string) => {
-    switch (type) {
-      case "role":
+    switch (type.toLowerCase()) {
+      case "auto":
         return "bg-blue-100 text-blue-800"
-      case "permission":
+      case "health":
         return "bg-green-100 text-green-800"
-      case "feature":
+      case "property":
         return "bg-purple-100 text-purple-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -107,7 +86,7 @@ export default function UsersPage() {
   // Filter the claims based on the selected user's ID
   const userClaims = selectedUser ? claims.filter((claim) => claim.userId === selectedUser.id) : []
 
-  if (isLoadingUsers || isLoadingClaims) {
+  if (loading.users || loading.claims) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div>Loading...</div>

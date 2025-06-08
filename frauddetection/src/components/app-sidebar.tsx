@@ -2,6 +2,8 @@
 
 import { Home, Users, Shield, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { deleteCookie } from "@/lib/handle-cookies"
 
 import {
   Sidebar,
@@ -42,6 +44,13 @@ const menuItems = [
 ]
 
 export function AppSidebar() {
+  const router = useRouter()
+
+  const handleLogout = () => {
+    deleteCookie("token")
+    router.push("/login")
+  }
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-6 py-4">
@@ -67,11 +76,13 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t p-4">
-        <Button variant="ghost" className="w-full justify-start" asChild>
-          <Link href="/login">
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Link>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
         </Button>
       </SidebarFooter>
       <SidebarRail />

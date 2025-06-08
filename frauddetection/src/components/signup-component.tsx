@@ -1,10 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react"
+import { setCookie } from "@/lib/handle-cookies"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
+const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
 export function SignupForm() {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -66,11 +70,51 @@ export function SignupForm() {
 
     setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${apiUrl}/api/Accounts/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: formData.name.split(" ")[0],
+          lastName: formData.name.split(" ").slice(1).join(" "),
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Registration failed")
+      }
+
+      // After successful registration, log the user in
+      const loginResponse = await fetch(`${apiUrl}/api/Accounts/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      if (!loginResponse.ok) {
+        throw new Error("Login failed after registration")
+      }
+
+      const { token } = await loginResponse.json()
+      setCookie("token", token)
+      router.push("/dashboard")
+    } catch (err) {
+      setErrors({
+        ...errors,
+        submit: err instanceof Error ? err.message : "Registration failed",
+      })
+    } finally {
       setIsLoading(false)
-      console.log(formData)
-    }, 1000)
+    }
   }
 
   function handleInputChange(field: string, value: string | boolean) {
@@ -86,9 +130,13 @@ export function SignupForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
         <CardDescription>Enter your information to create your account</CardDescription>
-      </CardHeader>
-      <CardContent>
+      </CardHeader>      <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
+          {errors.submit && (
+            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+              {errors.submit}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <div className="relative">

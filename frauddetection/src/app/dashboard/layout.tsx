@@ -1,13 +1,27 @@
+'use client'
+
 import type React from "react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
+import { getCookie } from "@/lib/handle-cookies"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = getCookie('token')
+    if (!token) {
+      router.push('/login')
+    }
+  }, [router])
+
   return (
     <SidebarProvider>
       <AppSidebar />

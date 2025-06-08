@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useState, useEffect } from "react"
 import { Claim } from "./claims/page"
 import { User } from "./users/page"
-
+import { apiGet } from "@/lib/api"
 
 export default function DashboardPage() {
   // States for users, claims, and loading/error handling
@@ -20,26 +20,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUsersAndClaims = async () => {
       try {
-        const userResponse = await fetch(`${apiUrl}/api/Accounts/GetAllUsers`, {
-          method: 'GET',
-          headers: {
-            'accept': 'text/plain',
-          },
-        })
+        const [userResponse, claimResponse] = await Promise.all([
+          apiGet(`${apiUrl}/api/Accounts/GetAllUsers`),
+          apiGet(`${apiUrl}/api/Claims/get-all-claims`)
+        ])
 
-        if (!userResponse.ok) {
-          throw new Error(`Error fetching users: ${userResponse.statusText}`)
-        }
-
-        const claimResponse = await fetch(`${apiUrl}/api/Claims/get-all-claims`, {
-          method: 'GET',
-          headers: {
-            'accept': 'text/plain',
-          },
-        })
-
-        if (!claimResponse.ok) {
-          throw new Error(`Error fetching claims: ${claimResponse.statusText}`)
+        if (!userResponse || !claimResponse) {
+          throw new Error('Failed to fetch data')
         }
 
         const usersData = await userResponse.json()
@@ -49,13 +36,13 @@ export default function DashboardPage() {
         setClaims(claimsData)
         setLoading(false)
       } catch (error: unknown) {
-        setError(error || "Failed to fetch data")
+        setError(error instanceof Error ? error.message : 'Failed to fetch data')
         setLoading(false)
       }
     }
 
     fetchUsersAndClaims()
-  }, [])
+  }, [apiUrl])
 
   // Helper function to get the count of active and pending users
   const activeUsers = users.filter((user) => user.status === "active").length
