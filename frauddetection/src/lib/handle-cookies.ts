@@ -8,7 +8,7 @@ export function getCookie(name: string): string | null {
 export function setCookie(name: string, value: string, days: number = 1) {
   const expirationDate = new Date()
   expirationDate.setDate(expirationDate.getDate() + days)
-  document.cookie = `${name}=${value}; path=/; expires=${expirationDate.toUTCString()}`
+  document.cookie = `${name}=${value}; path=/; expires=${expirationDate.toUTCString()}; SameSite=Strict`
 }
 
 export function deleteCookie(name: string) {

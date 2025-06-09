@@ -6,13 +6,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react"
 import { setCookie } from "@/lib/handle-cookies"
+import { jwtDecode } from "jwt-decode"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
@@ -71,7 +71,7 @@ export function SignupForm() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${apiUrl}/api/Accounts/register`, {
+      const response = await fetch(`${apiUrl}/Accounts/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,7 +89,7 @@ export function SignupForm() {
       }
 
       // After successful registration, log the user in
-      const loginResponse = await fetch(`${apiUrl}/api/Accounts/login`, {
+      const loginResponse = await fetch(`${apiUrl}/Accounts/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,7 +105,21 @@ export function SignupForm() {
       }
 
       const { token } = await loginResponse.json()
+      
+      // Decode token to check role before redirecting
+      const decodedToken = jwtDecode(token) as { 
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'?: string 
+      }
+      
+      const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+      
       setCookie("token", token)
+      
+      if (role === "Admin") {
+        router.push("/admin/dashboard")
+        return
+      }
+      
       router.push("/dashboard")
     } catch (err) {
       setErrors({
@@ -250,20 +264,6 @@ export function SignupForm() {
           </Button>
         </form>
 
-        <div className="mt-4 flex items-center">
-          <Separator className="flex-1" />
-          <span className="mx-2 text-xs text-muted-foreground">OR CONTINUE WITH</span>
-          <Separator className="flex-1" />
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button variant="outline" type="button" disabled={isLoading}>
-            Google
-          </Button>
-          <Button variant="outline" type="button" disabled={isLoading}>
-            GitHub
-          </Button>
-        </div>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">

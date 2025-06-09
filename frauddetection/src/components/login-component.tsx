@@ -12,7 +12,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+
+import { jwtDecode } from "jwt-decode"
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
@@ -30,7 +31,7 @@ export function LoginForm() {
     setError("")
 
     try {
-      const response = await fetch(`${apiUrl}/api/Accounts/login`, {
+      const response = await fetch(`${apiUrl}/Accounts/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,9 +42,34 @@ export function LoginForm() {
       if (!response.ok) {
         throw new Error("Invalid credentials")
       }
-
+      
       const { token } = await response.json()
+
+      // Store the token first
       setCookie("token", token)
+      
+      // Then decode and check the role
+      const decodedToken = jwtDecode(token) as { 
+        Role?: string;
+        role?: string;
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'?: string;
+        email?: string;
+        nameid?: string;
+      }
+
+      console.log('Login successful, decoded token:', decodedToken)
+
+      // Check for role in multiple possible formats and normalize to lowercase
+      const userRole = (
+        decodedToken.Role || 
+        decodedToken.role || 
+        decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 
+        ''
+      ).toLowerCase()
+
+      console.log('Detected user role:', userRole)
+
+      // Redirect based on normalized role
       router.push("/dashboard")
     } catch (err) {
       setError(
@@ -137,21 +163,6 @@ export function LoginForm() {
             {isLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
-        <div className="mt-4 flex items-center">
-          <Separator className="flex-1" />
-          <span className="mx-2 text-xs text-muted-foreground">
-            OR CONTINUE WITH
-          </span>
-          <Separator className="flex-1" />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button variant="outline" type="button" disabled={isLoading}>
-            Google
-          </Button>
-          <Button variant="outline" type="button" disabled={isLoading}>
-            GitHub
-          </Button>
-        </div>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
